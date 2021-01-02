@@ -12,6 +12,7 @@ app.set("view engine", "ejs");
 var title = "";
 var artist = "";
 var album = "";
+var state = "play";
 
 app.use(express.static("./public"));
 app.get("/", function (req, res) {
@@ -30,6 +31,7 @@ app.get("/current_song", (req, res) => {
           title: title,
           artist: artist,
           album: album,
+          state: state,
         });
       } else {
         res.send({
@@ -38,6 +40,7 @@ app.get("/current_song", (req, res) => {
           title: title,
           artist: artist,
           album: album,
+          state: state,
         });
       }
     });
@@ -48,6 +51,7 @@ app.get("/current_song", (req, res) => {
       title: title,
       artist: artist,
       album: album,
+      state: state,
     });
   }
 });
@@ -86,6 +90,8 @@ mpcpp_client.on("system-player", () => {
   mpcpp_client.status((err, status) => {
     if (err) throw err;
     console.log("Status:", status);
+    if (status.state != undefined) state = status.state;
+    //state = 'pause',
   });
 
   mpcpp_client.currentSong((err, song) => {
