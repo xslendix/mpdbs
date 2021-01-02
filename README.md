@@ -12,16 +12,19 @@ MPDbs is a simple way to add MPD support into OBS.
 
 ## How to install
 
- * Linux:
-
 ```
 $ git clone --depth 1 https://github.com/xSlendiX/mpdbs.git
 $ cd mpdbs
 $ yarn
-$ yarn start
 ```
 
 The process should be similar in Windows but I am not familiar with it.
+
+## How to start
+
+```
+$ yarn start
+```
 
 ## Changing position of widget
 
