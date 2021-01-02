@@ -2,9 +2,9 @@ const mpcpp = require("mpcpp");
 const express = require("express");
 const path = require("path");
 const albumArt = require("album-art");
+const config = require("./config");
 
 const app = express();
-const port = 3000;
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
@@ -15,7 +15,9 @@ var album = "";
 
 app.use(express.static("./public"));
 app.get("/", function (req, res) {
-  res.render("pages/status_small");
+  res.render("pages/status_small", {
+    layout: config.layout,
+  });
 });
 
 app.get("/current_song", (req, res) => {
@@ -50,11 +52,13 @@ app.get("/current_song", (req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`Web server started on port ${port}!`));
+app.listen(config.port, () =>
+  console.log(`Web server started on port ${config.port}!`)
+);
 
 const mpcpp_client = mpcpp.connect({
-  port: 6600, // Change if your MPD is on a different port.
-  host: "localhost", // Change if mpd is not running locally on your PC.
+  port: config.mpd_port, // Change if your MPD is on a different port.
+  host: config.mpd_address, // Change if mpd is not running locally on your PC.
 });
 
 mpcpp_client.on("ready", () => {
