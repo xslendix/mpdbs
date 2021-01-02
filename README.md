@@ -34,8 +34,3 @@ Open up `views/pages/status_small.ejs` and change the classes of the body tag.
 
 Open up `views/pages/status_small.ejs` and change the `black` from the card into `white`.
 
-## Not yet implemented
-
- * Automatic hiding when pausing/stopping
- * Configuration file
-
