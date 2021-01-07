@@ -1,4 +1,5 @@
 const mpcpp = require("mpcpp");
+const fetch = require("node-fetch");
 const express = require("express");
 const path = require("path");
 const albumArt = require("album-art");
@@ -12,6 +13,7 @@ app.set("view engine", "ejs");
 var title = "";
 var artist = "";
 var album = "";
+var albumImage = "";
 var state = "play";
 
 app.use(express.static("./public"));
@@ -22,7 +24,9 @@ app.get("/", function (req, res) {
 });
 
 app.get("/current_song", (req, res) => {
-  if (album != {} && album) {
+  if (album != {} && album && albumImage == "") {
+    console.log(" - No albumImage, using Spotify");
+    console.log(" - Current albumImage value: " + albumImage);
     albumArt(artist, { album: album, size: "small" }).then((url) => {
       if (typeof url != "object") {
         res.send({
@@ -34,9 +38,10 @@ app.get("/current_song", (req, res) => {
           state: state,
         });
       } else {
+        console.log(" - Failed to using Spotify");
         res.send({
-          image: false,
-          image_url: "",
+          image: albumImage ? true : false,
+          image_url: albumImage,
           title: title,
           artist: artist,
           album: album,
@@ -45,9 +50,11 @@ app.get("/current_song", (req, res) => {
       }
     });
   } else {
+    console.log(" - Using albumImage");
+    console.log(" - Current albumImage value: " + albumImage);
     res.send({
-      image: false,
-      image_url: "",
+      image: albumImage ? true : false,
+      image_url: albumImage,
       title: title,
       artist: artist,
       album: album,
@@ -68,17 +75,7 @@ const mpcpp_client = mpcpp.connect({
 mpcpp_client.on("ready", () => {
   console.log("Connected to MPD.");
 
-  mpcpp_client.currentSong((err, song) => {
-    if (err) throw err;
-    console.log("Current song:", song);
-    updatePlaying(song);
-
-    mpcpp_client.currentAlbum((err, alb) => {
-      if (err) throw err;
-      console.log("Current album:", alb);
-      album = alb.title;
-    });
-  });
+  _currentSong();
 });
 
 mpcpp_client.on("system", (name) => {
@@ -94,18 +91,37 @@ mpcpp_client.on("system-player", () => {
     //state = 'pause',
   });
 
+  _currentSong();
+});
+
+function _currentSong() {
   mpcpp_client.currentSong((err, song) => {
     if (err) throw err;
     console.log("Current song:", song);
     updatePlaying(song);
+    albumImage = "";
+    if (song.MUSICBRAINZ_ALBUMID) {
+      console.log("albumImage exists: " + song.MUSICBRAINZ_ALBUMID);
+      album = "";
 
-    mpcpp_client.currentAlbum((err, alb) => {
-      if (err) throw err;
-      console.log("Current album:", alb);
-      album = alb.title;
-    });
+      let url = `https://ia803202.us.archive.org/1/items/mbid-${song.MUSICBRAINZ_ALBUMID}/index.json`;
+      fetch(url, { method: "GET" })
+        .then((res) => res.json())
+        .then((json) => {
+          albumImage = json.images[0].thumbnails.small;
+          console.log("Got albumImage: " + albumImage);
+        });
+    } else {
+      albumImage = "";
+      console.log("No albumImage");
+      mpcpp_client.currentAlbum((err, alb) => {
+        if (err) throw err;
+        console.log("Current album:", alb);
+        album = alb.title;
+      });
+    }
   });
-});
+}
 
 function updatePlaying(song) {
   title = song.title != undefined ? song.title : song.file;
